@@ -1,6 +1,17 @@
+"""
+    __autor__ = "Tiago kiill"
+    __email__ = "tiagokiill@gmail.com"
+    __credits__ = "Tiago Kiill"
+"""
 import boto3
 
 def get_roles():
+    """
+        Explanation: Method defined to get all rules from AWS
+        :params: No params required
+        :return: list os AWS accounts from rules
+    """
+
     client = boto3.client('iam')
     response = client.list_roles()
 
@@ -21,4 +32,3 @@ def get_roles():
                     f'Effect of role: {effect}, '
                     f'Action of role: {external_action}')
                 return external_arn[13:25]
-
