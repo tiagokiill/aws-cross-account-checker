@@ -33,7 +33,6 @@ def get_roles():
     return list
 
 
-
 def get_orgs():
     """
         Explanation: Method defined to get all accounts from AWS Organization
@@ -49,3 +48,19 @@ def get_orgs():
 
     return list
 
+def send_msg():
+    """
+        Explanation: Method defined to send msg with report
+        :params: list
+        :return: list of AWS accounts from organization
+    """
+
+    client = boto3.client('sns')
+    response = client.publish(
+        TopicArn='arn:aws:sns:us-east-1:325868435144:aws-cross-account-checker',
+        Message='teste',
+        Subject='teste'
+    )
+
+    if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+        print('msg sent at {}'.format(response['ResponseMetadata']['HTTPHeaders']['date']))
