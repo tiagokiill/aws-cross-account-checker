@@ -14,7 +14,7 @@ def get_roles():
 
     client = boto3.client('iam')
     response = client.list_roles()
-
+    list = []
     for a in response['Roles']:
         path = a['Path']
         role_name = a['RoleName']
@@ -27,8 +27,25 @@ def get_roles():
             external_action = b['Action']
 
             if external_arn != 'Access From AWS Native Service':
-                print(
-                    f'**ALERT** External account ID: {external_arn[13:25]}, '
-                    f'Effect of role: {effect}, '
-                    f'Action of role: {external_action}')
-                return external_arn[13:25]
+                list.append(external_arn[13:25])
+
+    print(list)
+    return list
+
+
+
+def get_orgs():
+    """
+        Explanation: Method defined to get all accounts from AWS Organization
+        :params: No params required
+        :return: list of AWS accounts from organization
+    """
+
+    client = boto3.client('organizations')
+    response = client.list_accounts()
+    list = []
+    for a in response['Accounts']:
+        list.append(a['Id'])
+
+    return list
+
