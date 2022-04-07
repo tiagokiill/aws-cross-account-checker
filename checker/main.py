@@ -1,9 +1,12 @@
 """
-    __autor__ = "Tiago kiill"
-    __email__ = "tiagokiill@gmail.com"
-    __credits__ = "Tiago Kiill"
+    __autor__ = "Tiago kiill and Teogenes Panella"
+    __email__ = "tiagokiill@gmail.com and teo.panella@gmail.com"
+    __credits__ = "Tiago Kiill and Teogenes Panella"
 """
+
 import boto3
+import json
+
 
 def get_roles():
     """
@@ -28,8 +31,11 @@ def get_roles():
 
             if external_arn != 'Access From AWS Native Service':
                 list.append(external_arn[13:25])
+                #print(
+                #    f'**ALERT** External account ID: {external_arn[13:25]}, '
+                #    f'Effect of role: {effect}, '
+                #    f'Action of role: {external_action}')
 
-    print(list)
     return list
 
 
@@ -48,19 +54,33 @@ def get_orgs():
 
     return list
 
-def send_msg():
+
+def send_msg(accounts_from_roles):
     """
         Explanation: Method defined to send msg with report
         :params: list
-        :return: list of AWS accounts from organization
+        :return: Date of msg sent
     """
 
     client = boto3.client('sns')
+    msg = str(accounts_from_roles)
     response = client.publish(
         TopicArn='arn:aws:sns:us-east-1:325868435144:aws-cross-account-checker',
-        Message='teste',
-        Subject='teste'
+        Message=str(accounts_from_roles),
+        Subject=' ** - REPORT - ** AWS Cross Account Checker'
     )
 
     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
         print('msg sent at {}'.format(response['ResponseMetadata']['HTTPHeaders']['date']))
+
+
+def lambda_handler(event, context):
+
+    accounts_from_roles = get_roles()
+    send_msg(accounts_from_roles)
+    return {
+        'statusCode': 200,
+        'body': json.dumps('')
+    }
+
+
