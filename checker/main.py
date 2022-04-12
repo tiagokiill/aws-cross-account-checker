@@ -113,7 +113,6 @@ def lambda_handler(event, context):
                     if org_details['Organization']['MasterAccountId'] != account['Principal']['AWS'][13:25]:
                         if account_id not in account['Principal']['AWS'][13:25]:
                             list_of_roles_from_accounts.append(roles_from_accounts)
-                            #print(account['Principal']['AWS'][13:25])
 
         except:
             #report_error.append(('Error: Without permission to assume role at AWS Account: {} Id : {}'.format(account_name,account_id)))
@@ -122,11 +121,28 @@ def lambda_handler(event, context):
             error['access_error_account_id'] = account_id
             report_error.append(error)
 
-    #todo building msg
+    #building msg
+    raw = ['Internal Account Id,Internal Account Name,Role Name,Role Created at,Effect of Role,External Account Id']
     for a in list_of_roles_from_accounts:
-        print(a)
-    #send_msg(report)
+        internal_account_name = ''
+        for account_name, account_id in orgs_from_accounts.items():
+            if str(account_id) == str(a['Arn'][13:25]):
+                internal_account_name = account_name
+        role_name = a['RoleName']
+        #role_arn = a['Arn']
+        role_source_account_id = a['Arn'][13:25]
+        role_date = a['CreateDate']
+        for b in a['AssumeRolePolicyDocument']['Statement']:
+            role_effect = b['Effect']
+            role_external_account_id = b['Principal']['AWS'][13:25]
+            raw.append('{},{},{},{},{},{}'.format(role_source_account_id,
+                                                  internal_account_name,
+                                                  role_name,
+                                                  role_date,
+                                                  role_effect,
+                                                  role_external_account_id))
 
+    send_msg('\n'.join(raw))
 
     return {
         'statusCode': 200,
