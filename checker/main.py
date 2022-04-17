@@ -140,5 +140,3 @@ def lambda_handler(event, context):
         'body': json.dumps('')
     }
 
-
-lambda_handler('a','b')
