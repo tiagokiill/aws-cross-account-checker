@@ -6,6 +6,9 @@
 
 import boto3
 import json
+import os
+
+
 
 
 def get_roles(session):
@@ -79,7 +82,8 @@ def get_session(account_name, account_id):
         :params: str Account_name
         :return: dict with new session data
     """
-    rolearn = '{}{}{}'.format('arn:aws:iam::', account_id, ':role/OrganizationAccountAccessRole')
+    env_role_name = os.environ.get('OrganizationAccountAccessRole')
+    rolearn = '{}{}{}{}'.format('arn:aws:iam::', account_id, ':role/', env_role_name)
     client = boto3.client('sts')
     response = client.assume_role(
         RoleArn=rolearn,
@@ -133,10 +137,12 @@ def lambda_handler(event, context):
     for x in report_error:
         raw.append(x)
 
-    send_msg('\n'.join(raw))
+    print('\n'.join(raw))
+    #send_msg('\n'.join(raw))
 
     return {
         'statusCode': 200,
         'body': json.dumps('')
     }
 
+lambda_handler('a','b')
