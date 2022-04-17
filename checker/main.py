@@ -117,7 +117,7 @@ def lambda_handler(event, context):
                                 list_of_roles_from_accounts.append(roles_from_accounts)
 
         except:
-            error = '{},{},Error: Without permission to assume role at AWS Account'.format(account_id, account_name)
+            error = '{},{},Error: Without permission to assume the role at AWS Account'.format(account_id, account_name)
             report_error.append(str(error))
 
     raw = ['Internal Account Id,Internal Account Name,Role Name,Role Created at,Effect of Role,External Account Id']
