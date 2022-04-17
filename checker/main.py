@@ -26,18 +26,9 @@ def get_roles(session):
     for a in response['Roles']:
 
         for b in a['AssumeRolePolicyDocument']['Statement']:
-            effect = b['Effect']
             external_arn = b['Principal'].get('AWS', 'Access From AWS Native Service')
-            #external_action = b['Action']
-
             if external_arn != 'Access From AWS Native Service':
                 list_of_roles.append(a)
-
-#                dic_item[a['RoleId']] = a['RoleName']
-#                dic_item['external_account_id'] = external_arn[13:25]
-#                dic_item['role_arn'] = a['Arn']
-
-
 
     return list_of_roles
 
@@ -101,6 +92,7 @@ def get_session(account_name, account_id):
 def lambda_handler(event, context):
 
     list_of_roles_from_accounts = list()
+    error = dict()
     report_error = list()
     org_details = get_orgs(0)
     orgs_from_accounts = get_orgs(1)
@@ -115,21 +107,17 @@ def lambda_handler(event, context):
                             list_of_roles_from_accounts.append(roles_from_accounts)
 
         except:
-            #report_error.append(('Error: Without permission to assume role at AWS Account: {} Id : {}'.format(account_name,account_id)))
-            error = dict()
-            error['access_error_account_name'] = account_name
-            error['access_error_account_id'] = account_id
-            report_error.append(error)
+            error = '{},{},Error: Without permission to assume role at AWS Account'.format(account_id, account_name)
+            report_error.append(str(error))
 
-    #building msg
     raw = ['Internal Account Id,Internal Account Name,Role Name,Role Created at,Effect of Role,External Account Id']
+
     for a in list_of_roles_from_accounts:
         internal_account_name = ''
         for account_name, account_id in orgs_from_accounts.items():
             if str(account_id) == str(a['Arn'][13:25]):
                 internal_account_name = account_name
         role_name = a['RoleName']
-        #role_arn = a['Arn']
         role_source_account_id = a['Arn'][13:25]
         role_date = a['CreateDate']
         for b in a['AssumeRolePolicyDocument']['Statement']:
@@ -142,6 +130,9 @@ def lambda_handler(event, context):
                                                   role_effect,
                                                   role_external_account_id))
 
+    for x in report_error:
+        raw.append(x)
+
     send_msg('\n'.join(raw))
 
     return {
@@ -149,3 +140,5 @@ def lambda_handler(event, context):
         'body': json.dumps('')
     }
 
+
+lambda_handler('a','b')
