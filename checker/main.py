@@ -9,8 +9,6 @@ import json
 import os
 
 
-
-
 def get_roles(session):
     """
         Explanation: Method defined to get all rules from AWS
@@ -96,7 +94,6 @@ def get_session(account_name, account_id):
 def lambda_handler(event, context):
 
     list_of_roles_from_accounts = list()
-    #error = dict()
     report_error = list()
     org_details = get_orgs(0)
     orgs_from_accounts = get_orgs(1)
