@@ -9,17 +9,19 @@ import json
 import os
 
 
-def get_roles(session):
+def get_roles(session, org_account):
     """
         Explanation: Method defined to get all rules from AWS
         :params: str session
         :return: dict of os AWS accounts from rules found
     """
-
-    client = boto3.client('iam',
-                        aws_access_key_id=session['Credentials']['AccessKeyId'],
-                        aws_secret_access_key=session['Credentials']['SecretAccessKey'],
-                        aws_session_token=session['Credentials']['SessionToken'])
+    if org_account is True:
+        client = boto3.client('iam',
+                            aws_access_key_id=session['Credentials']['AccessKeyId'],
+                            aws_secret_access_key=session['Credentials']['SecretAccessKey'],
+                            aws_session_token=session['Credentials']['SessionToken'])
+    else:
+        client = boto3.client('iam')
 
     response = client.list_roles()
     list_of_roles = []
@@ -100,12 +102,19 @@ def lambda_handler(event, context):
 
     for account_name, account_id in orgs_from_accounts.items():
         try:
-            session = get_session(account_name, account_id)
-            for roles_from_accounts in get_roles(session):
-                for account in roles_from_accounts['AssumeRolePolicyDocument']['Statement']:
-                    if org_details['Organization']['MasterAccountId'] != account['Principal']['AWS'][13:25]:
-                        if account_id not in account['Principal']['AWS'][13:25]:
-                            list_of_roles_from_accounts.append(roles_from_accounts)
+            if str(org_details['Organization']['MasterAccountId']) == str(account_id):
+                for roles_from_accounts in get_roles(session, True):
+                    for account in roles_from_accounts['AssumeRolePolicyDocument']['Statement']:
+                        if org_details['Organization']['MasterAccountId'] != account['Principal']['AWS'][13:25]:
+                            if account_id not in account['Principal']['AWS'][13:25]:
+                                list_of_roles_from_accounts.append(roles_from_accounts)
+            else:
+                session = get_session(account_name, account_id)
+                for roles_from_accounts in get_roles(session, False):
+                    for account in roles_from_accounts['AssumeRolePolicyDocument']['Statement']:
+                        if org_details['Organization']['MasterAccountId'] != account['Principal']['AWS'][13:25]:
+                            if account_id not in account['Principal']['AWS'][13:25]:
+                                list_of_roles_from_accounts.append(roles_from_accounts)
 
         except:
             error = '{},{},Error: Without permission to assume role at AWS Account'.format(account_id, account_name)
@@ -134,12 +143,9 @@ def lambda_handler(event, context):
     for x in report_error:
         raw.append(x)
 
-    print('\n'.join(raw))
-    #send_msg('\n'.join(raw))
+    send_msg('\n'.join(raw))
 
     return {
         'statusCode': 200,
         'body': json.dumps('')
     }
-
-lambda_handler('a','b')
