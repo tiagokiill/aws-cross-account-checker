@@ -63,11 +63,11 @@ def send_msg(accounts_from_roles):
         :params: list
         :return: Date of the message sent
     """
-
+    topic = os.environ.get('TopicArn')
     client = boto3.client('sns')
     msg = str(accounts_from_roles)
     response = client.publish(
-        TopicArn='arn:aws:sns:us-east-1:325868435144:aws-cross-account-checker',
+        TopicArn=topic,
         Message=str(accounts_from_roles),
         Subject=' ** - REPORT - ** AWS Cross Account Checker'
     )
@@ -96,7 +96,7 @@ def get_session(account_name, account_id):
 def lambda_handler(event, context):
 
     list_of_roles_from_accounts = list()
-    error = dict()
+    #error = dict()
     report_error = list()
     org_details = get_orgs(0)
     orgs_from_accounts = get_orgs(1)
