@@ -6,19 +6,22 @@
 
 import boto3
 import json
+import os
 
 
-def get_roles(session):
+def get_roles(session, org_account):
     """
         Explanation: Method defined to get all rules from AWS
         :params: str session
         :return: dict of os AWS accounts from rules found
     """
-
-    client = boto3.client('iam',
-                        aws_access_key_id=session['Credentials']['AccessKeyId'],
-                        aws_secret_access_key=session['Credentials']['SecretAccessKey'],
-                        aws_session_token=session['Credentials']['SessionToken'])
+    if org_account is False:
+        client = boto3.client('iam',
+                            aws_access_key_id=session['Credentials']['AccessKeyId'],
+                            aws_secret_access_key=session['Credentials']['SecretAccessKey'],
+                            aws_session_token=session['Credentials']['SessionToken'])
+    else:
+        client = boto3.client('iam')
 
     response = client.list_roles()
     list_of_roles = []
@@ -26,18 +29,9 @@ def get_roles(session):
     for a in response['Roles']:
 
         for b in a['AssumeRolePolicyDocument']['Statement']:
-            effect = b['Effect']
             external_arn = b['Principal'].get('AWS', 'Access From AWS Native Service')
-            #external_action = b['Action']
-
             if external_arn != 'Access From AWS Native Service':
                 list_of_roles.append(a)
-
-#                dic_item[a['RoleId']] = a['RoleName']
-#                dic_item['external_account_id'] = external_arn[13:25]
-#                dic_item['role_arn'] = a['Arn']
-
-
 
     return list_of_roles
 
@@ -69,11 +63,11 @@ def send_msg(accounts_from_roles):
         :params: list
         :return: Date of the message sent
     """
-
+    topic = os.environ.get('TopicArn')
     client = boto3.client('sns')
     msg = str(accounts_from_roles)
     response = client.publish(
-        TopicArn='arn:aws:sns:us-east-1:325868435144:aws-cross-account-checker',
+        TopicArn=topic,
         Message=str(accounts_from_roles),
         Subject=' ** - REPORT - ** AWS Cross Account Checker'
     )
@@ -88,7 +82,8 @@ def get_session(account_name, account_id):
         :params: str Account_name
         :return: dict with new session data
     """
-    rolearn = '{}{}{}'.format('arn:aws:iam::', account_id, ':role/OrganizationAccountAccessRole')
+    env_role_name = os.environ.get('OrganizationAccountAccessRole')
+    rolearn = '{}{}{}{}'.format('arn:aws:iam::', account_id, ':role/', env_role_name)
     client = boto3.client('sts')
     response = client.assume_role(
         RoleArn=rolearn,
@@ -107,29 +102,31 @@ def lambda_handler(event, context):
 
     for account_name, account_id in orgs_from_accounts.items():
         try:
-            session = get_session(account_name, account_id)
-            for roles_from_accounts in get_roles(session):
+            session = str
+            is_org = False
+            if str(org_details['Organization']['MasterAccountId']) == str(account_id):
+                is_org = True
+            else:
+                session = get_session(account_name, account_id)
+
+            for roles_from_accounts in get_roles(session, is_org):
                 for account in roles_from_accounts['AssumeRolePolicyDocument']['Statement']:
                     if org_details['Organization']['MasterAccountId'] != account['Principal']['AWS'][13:25]:
                         if account_id not in account['Principal']['AWS'][13:25]:
                             list_of_roles_from_accounts.append(roles_from_accounts)
 
         except:
-            #report_error.append(('Error: Without permission to assume role at AWS Account: {} Id : {}'.format(account_name,account_id)))
-            error = dict()
-            error['access_error_account_name'] = account_name
-            error['access_error_account_id'] = account_id
-            report_error.append(error)
+            error = '{},{},Error: Without permission to assume the role at AWS Account'.format(account_id, account_name)
+            report_error.append(str(error))
 
-    #building msg
     raw = ['Internal Account Id,Internal Account Name,Role Name,Role Created at,Effect of Role,External Account Id']
+
     for a in list_of_roles_from_accounts:
         internal_account_name = ''
         for account_name, account_id in orgs_from_accounts.items():
             if str(account_id) == str(a['Arn'][13:25]):
                 internal_account_name = account_name
         role_name = a['RoleName']
-        #role_arn = a['Arn']
         role_source_account_id = a['Arn'][13:25]
         role_date = a['CreateDate']
         for b in a['AssumeRolePolicyDocument']['Statement']:
@@ -142,10 +139,15 @@ def lambda_handler(event, context):
                                                   role_effect,
                                                   role_external_account_id))
 
-    send_msg('\n'.join(raw))
+    for x in report_error:
+        raw.append(x)
+
+    print('\n'.join(raw))
+    #send_msg('\n'.join(raw))
 
     return {
         'statusCode': 200,
         'body': json.dumps('')
     }
 
+lambda_handler('a','b')
