@@ -1,7 +1,7 @@
 # aws-cross-account-checker
 AWS Cross-Account Checker
 
-![General](/imgs/projeto.svg)
+<img alt="General" height="600" src="./imgs/projeto.svg" title="General Diagram" width="600"/>
 
 ### Environment Variables
 To right execution of this code you must configure the variables below:
