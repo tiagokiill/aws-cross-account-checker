@@ -108,6 +108,7 @@ def lambda_handler(event, context):
                 is_org = True
             else:
                 session = get_session(account_name, account_id)
+
             for roles_from_accounts in get_roles(session, is_org):
                 for account in roles_from_accounts['AssumeRolePolicyDocument']['Statement']:
                     if org_details['Organization']['MasterAccountId'] != account['Principal']['AWS'][13:25]:
