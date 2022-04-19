@@ -15,7 +15,7 @@ def get_roles(session, org_account):
         :params: str session
         :return: dict of os AWS accounts from rules found
     """
-    if org_account is True:
+    if org_account is False:
         client = boto3.client('iam',
                             aws_access_key_id=session['Credentials']['AccessKeyId'],
                             aws_secret_access_key=session['Credentials']['SecretAccessKey'],
