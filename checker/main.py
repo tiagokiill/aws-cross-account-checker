@@ -102,19 +102,17 @@ def lambda_handler(event, context):
 
     for account_name, account_id in orgs_from_accounts.items():
         try:
+            session = str
+            is_org = False
             if str(org_details['Organization']['MasterAccountId']) == str(account_id):
-                for roles_from_accounts in get_roles(session, True):
-                    for account in roles_from_accounts['AssumeRolePolicyDocument']['Statement']:
-                        if org_details['Organization']['MasterAccountId'] != account['Principal']['AWS'][13:25]:
-                            if account_id not in account['Principal']['AWS'][13:25]:
-                                list_of_roles_from_accounts.append(roles_from_accounts)
+                is_org = True
             else:
                 session = get_session(account_name, account_id)
-                for roles_from_accounts in get_roles(session, False):
-                    for account in roles_from_accounts['AssumeRolePolicyDocument']['Statement']:
-                        if org_details['Organization']['MasterAccountId'] != account['Principal']['AWS'][13:25]:
-                            if account_id not in account['Principal']['AWS'][13:25]:
-                                list_of_roles_from_accounts.append(roles_from_accounts)
+            for roles_from_accounts in get_roles(session, is_org):
+                for account in roles_from_accounts['AssumeRolePolicyDocument']['Statement']:
+                    if org_details['Organization']['MasterAccountId'] != account['Principal']['AWS'][13:25]:
+                        if account_id not in account['Principal']['AWS'][13:25]:
+                            list_of_roles_from_accounts.append(roles_from_accounts)
 
         except:
             error = '{},{},Error: Without permission to assume the role at AWS Account'.format(account_id, account_name)
@@ -143,9 +141,12 @@ def lambda_handler(event, context):
     for x in report_error:
         raw.append(x)
 
-    send_msg('\n'.join(raw))
+    print('\n'.join(raw))
+    #send_msg('\n'.join(raw))
 
     return {
         'statusCode': 200,
         'body': json.dumps('')
     }
+
+lambda_handler('a','b')
