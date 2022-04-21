@@ -1,5 +1,11 @@
-# aws-cross-account-checker
-AWS Cross-Account Checker
+```
+╔═╗╦ ╦╔═╗  ╔═╗╦═╗╔═╗╔═╗╔═╗  ╔═╗╔═╗╔═╗╔═╗╦ ╦╔╗╔╔╦╗  ╔═╗╦ ╦╔═╗╔═╗╦╔═╔═╗╦═╗
+╠═╣║║║╚═╗  ║  ╠╦╝║ ║╚═╗╚═╗  ╠═╣║  ║  ║ ║║ ║║║║ ║   ║  ╠═╣║╣ ║  ╠╩╗║╣ ╠╦╝
+╩ ╩╚╩╝╚═╝  ╚═╝╩╚═╚═╝╚═╝╚═╝  ╩ ╩╚═╝╚═╝╚═╝╚═╝╝╚╝ ╩   ╚═╝╩ ╩╚═╝╚═╝╩ ╩╚═╝╩╚═
+                                                                          
+```
+### Overview
+This project was created as a way to help cloud security professionals identify and protect the environments from unauthorized role cross-account. 
 
 <img alt="General" height="600" src="./imgs/projeto.svg" title="General Diagram" width="600"/>
 
