@@ -95,14 +95,18 @@ def get_session(account_name, account_id):
 
 
 def check_authorized(account_id):
-    itens_from_variable = (os.environ.get('AuthorizedAccounts')).split(',')
+    """
+        Explanation: Method defined to validate if the account was authorized
+        :params: str account_id
+        :return: bol True if account was authorized.
+    """
+
     authorized_account = False
-    for a in itens_from_variable:
+    for a in (os.environ.get('AuthorizedAccounts')).split(','):
         if account_id == a:
             authorized_account = True
 
     return authorized_account
-
 
 
 def lambda_handler(event, context):
@@ -145,18 +149,19 @@ def lambda_handler(event, context):
         for b in a['AssumeRolePolicyDocument']['Statement']:
             role_effect = b['Effect']
             role_external_account_id = b['Principal']['AWS'][13:25]
-            raw.append('{},{},{},{},{},{}'.format(role_source_account_id,
-                                                  internal_account_name,
-                                                  role_name,
-                                                  role_date,
-                                                  role_effect,
-                                                  role_external_account_id))
+            if check_authorized(role_external_account_id) is False:
+                raw.append('{},{},{},{},{},{}'.format(role_source_account_id,
+                                                      internal_account_name,
+                                                      role_name,
+                                                      role_date,
+                                                      role_effect,
+                                                      role_external_account_id))
 
     for x in report_error:
         raw.append(x)
 
-    print('\n'.join(raw))
-    #send_msg('\n'.join(raw))
+
+    send_msg('\n'.join(raw))
 
     return {
         'statusCode': 200,
