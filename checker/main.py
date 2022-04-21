@@ -13,6 +13,7 @@ def get_roles(session, org_account):
     """
         Explanation: Method defined to get all rules from AWS
         :params: str session
+        :params: bol or_account
         :return: dict of os AWS accounts from rules found
     """
     if org_account is False:
@@ -93,6 +94,21 @@ def get_session(account_name, account_id):
     return response
 
 
+def check_authorized(account_id):
+    """
+        Explanation: Method defined to validate if the account was authorized
+        :params: str account_id
+        :return: bol True if account was authorized.
+    """
+
+    authorized_account = False
+    for a in (os.environ.get('AuthorizedAccounts')).split(','):
+        if account_id == a:
+            authorized_account = True
+
+    return authorized_account
+
+
 def lambda_handler(event, context):
 
     list_of_roles_from_accounts = list()
@@ -116,7 +132,8 @@ def lambda_handler(event, context):
                             list_of_roles_from_accounts.append(roles_from_accounts)
 
         except:
-            error = '{},{},Error: Without permission to assume the role at AWS Account'.format(account_id, account_name)
+            error = '{},{},Error: Without permission to assume the role at AWS Account'.format(account_id,
+                                                                                               account_name)
             report_error.append(str(error))
 
     raw = ['Internal Account Id,Internal Account Name,Role Name,Role Created at,Effect of Role,External Account Id']
@@ -132,22 +149,21 @@ def lambda_handler(event, context):
         for b in a['AssumeRolePolicyDocument']['Statement']:
             role_effect = b['Effect']
             role_external_account_id = b['Principal']['AWS'][13:25]
-            raw.append('{},{},{},{},{},{}'.format(role_source_account_id,
-                                                  internal_account_name,
-                                                  role_name,
-                                                  role_date,
-                                                  role_effect,
-                                                  role_external_account_id))
+            if check_authorized(role_external_account_id) is False:
+                raw.append('{},{},{},{},{},{}'.format(role_source_account_id,
+                                                      internal_account_name,
+                                                      role_name,
+                                                      role_date,
+                                                      role_effect,
+                                                      role_external_account_id))
 
     for x in report_error:
         raw.append(x)
 
-    print('\n'.join(raw))
-    #send_msg('\n'.join(raw))
+
+    send_msg('\n'.join(raw))
 
     return {
         'statusCode': 200,
         'body': json.dumps('')
     }
-
-lambda_handler('a','b')

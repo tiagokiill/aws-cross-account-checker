@@ -1,27 +1,34 @@
-# aws-cross-account-checker
-AWS Cross-Account Checker
+```
+╔═╗╦ ╦╔═╗  ╔═╗╦═╗╔═╗╔═╗╔═╗  ╔═╗╔═╗╔═╗╔═╗╦ ╦╔╗╔╔╦╗  ╔═╗╦ ╦╔═╗╔═╗╦╔═╔═╗╦═╗
+╠═╣║║║╚═╗  ║  ╠╦╝║ ║╚═╗╚═╗  ╠═╣║  ║  ║ ║║ ║║║║ ║   ║  ╠═╣║╣ ║  ╠╩╗║╣ ╠╦╝
+╩ ╩╚╩╝╚═╝  ╚═╝╩╚═╚═╝╚═╝╚═╝  ╩ ╩╚═╝╚═╝╚═╝╚═╝╝╚╝ ╩   ╚═╝╩ ╩╚═╝╚═╝╩ ╩╚═╝╩╚═
+                                                                          
+```
+### Overview
+This project was created as a way to help cloud security professionals identify and protect the environments from unauthorized role cross-account. 
 
 <img alt="General" height="600" src="./imgs/projeto.svg" title="General Diagram" width="600"/>
 
 ### Environment Variables
 To right execution of this code you must configure the variables below:
 
-| Name                          | Value                                                                 | Description                                        |
-|-------------------------------|-----------------------------------------------------------------------|----------------------------------------------------|
-| OrganizationAccountAccessRole | OrganizationAccountAccessRole                                         | Name of role used to assume role in others account |
-| TopicArn                      | arn:aws:sns:us-east-1:111111111111:aws-cross-account-checker | Arn of topic used to send e-mails notification     |
+| Name                          | Value                                                        | Description                                   |
+|-------------------------------|--------------------------------------------------------------|-----------------------------------------------|
+| OrganizationAccountAccessRole | OrganizationAccountAccessRole                                | Name of role used to assume role in others account |
+| TopicArn                      | arn:aws:sns:us-east-1:111111111111:aws-cross-account-checker | Arn of topic used to send e-mails notification |
+| AuthorizedAccounts                      | 111111111111,11111111112,11111111113,111111111114            | Accounts separated by comma                   |
 
 
 ### Backlog
 
-1 - Send the report as csv attached: Here it's necessary to change the service sns;
+- [] Send the report as csv attached: Here it's necessary to change the service sns
 
-2 - Environment list of allowed account's id;
+- [x] Environment list of allowed account's id
 
-3 - Automatic removal of roles with external accounts;
+- [] Automatic removal of roles with external accounts
 
-4 - The Open Source license.
+- [] The Open Source license
 
-5 - The new diagram.
+- [] The new diagram
 
-6 - Text of this project proposal
+- [] Text of this project proposal
