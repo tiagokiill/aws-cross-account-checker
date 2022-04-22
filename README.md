@@ -32,3 +32,5 @@ To right execution of this code you must configure the variables below:
 - [] The new diagram
 
 - [] Text of this project proposal
+
+- [] Validate configs to execute
