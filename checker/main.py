@@ -109,6 +109,31 @@ def check_authorized(account_id):
     return authorized_account
 
 
+def remove_policies(rolename, org_account, session):
+    if org_account is False:
+        client = boto3.client('iam',
+                            aws_access_key_id=session['Credentials']['AccessKeyId'],
+                            aws_secret_access_key=session['Credentials']['SecretAccessKey'],
+                            aws_session_token=session['Credentials']['SessionToken'])
+    else:
+        client = boto3.client('iam')
+
+    response = client.list_attached_role_policies(
+        RoleName=rolename
+    )
+
+    for a in response['AttachedPolicies']:
+        print('Removing, {} from {}'.format(a['PolicyName'], rolename))
+        response = client.detach_role_policy(
+            RoleName=rolename,
+            PolicyArn=a['PolicyArn']
+        )
+
+
+
+
+
+
 def lambda_handler(event, context):
 
     list_of_roles_from_accounts = list()
@@ -160,8 +185,8 @@ def lambda_handler(event, context):
     for x in report_error:
         raw.append(x)
 
-
-    send_msg('\n'.join(raw))
+    print('\n'.join(raw))
+    #send_msg('\n'.join(raw))
 
     return {
         'statusCode': 200,
