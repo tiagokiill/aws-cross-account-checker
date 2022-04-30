@@ -156,7 +156,7 @@ def lambda_handler(event, context):
     print('Using role name {} to STS'.format(os.environ.get('OrganizationAccountAccessRole')))
     print('Authorized accounts: {}'.format(os.environ.get('AuthorizedAccounts')))
     print('Sending message on Topic: {}'.format(os.environ.get('TopicArn')))
-    if os.environ.get('Action').lower() == 'delete':
+    if os.environ.get('AutoDelete').lower() == 'on':
         print('Auto Delete "on"')
     else:
         print('Auto Delete "off"')
@@ -191,7 +191,7 @@ def lambda_handler(event, context):
                                 print('Role {} with account not authorized {}'.format(roles_from_accounts['RoleName'],
                                                                                       account['Principal']['AWS'][13:25]
                                                                                       ))
-                                if os.environ.get('Action').lower() == 'delete':
+                                if os.environ.get('AutoDelete').lower() == 'on':
                                     if del_role(roles_from_accounts['RoleName'], is_org, session) is True:
                                         list_of_deleted_roles.append(roles_from_accounts)
                                 else:
@@ -254,8 +254,7 @@ def lambda_handler(event, context):
     print('Sending message...')
     send_msg('\n'.join(raw))
 
-
     return {
         'statusCode': 200,
-        'body': json.dumps('')
+        'body': json.dumps('Job executed with success')
     }
