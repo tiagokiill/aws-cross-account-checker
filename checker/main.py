@@ -214,7 +214,7 @@ def lambda_handler(event, context):
                                     list_of_roles_from_accounts.append(roles_from_accounts)
 
         except:
-            print('Erro encontrado!!!')
+            print('Error Found: at Account {}'.format(account_name))
             error = '{},{},Error: Without permission to assume the role at AWS Account'.format(account_id,
                                                                                                account_name)
             report_error.append(str(error))
