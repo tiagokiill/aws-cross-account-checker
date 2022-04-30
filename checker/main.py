@@ -152,12 +152,24 @@ def del_role(rolename, org_account, session):
         return False
 
 def lambda_handler(event, context):
+    print('Params...')
+    print('Using role name {} to STS'.format(os.environ.get('OrganizationAccountAccessRole')))
+    print('Authorized accounts: {}'.format(os.environ.get('AuthorizedAccounts')))
+    print('Sending message on Topic: {}'.format(os.environ.get('TopicArn')))
+    if os.environ.get('Action').lower() == 'delete':
+        print('Auto Delete "on"')
+    else:
+        print('Auto Delete "off"')
+    print('---------------------------------------------------------')
+    print('Starting JOB...')
 
     list_of_roles_from_accounts = list()
     list_of_deleted_roles = list()
     report_error = list()
-
+    print('Getting org Details')
     org_details = get_orgs(0)
+
+    print('Getting accounts from organization')
     orgs_from_accounts = get_orgs(1)
 
     for account_name, account_id in orgs_from_accounts.items():
@@ -167,13 +179,18 @@ def lambda_handler(event, context):
             if str(org_details['Organization']['MasterAccountId']) == str(account_id):
                 is_org = True
             else:
+                print('Getting Session to check Account {}'.format(account_name))
                 session = get_session(account_name, account_id)
 
             for roles_from_accounts in get_roles(session, is_org):
+                print('Analyzing role {} at account {} '.format(roles_from_accounts['RoleName'], account_name))
                 for account in roles_from_accounts['AssumeRolePolicyDocument']['Statement']:
                     if org_details['Organization']['MasterAccountId'] != account['Principal']['AWS'][13:25]:
                         if account_id not in account['Principal']['AWS'][13:25]:
                             if check_authorized(account['Principal']['AWS'][13:25]) is False:
+                                print('Role {} with account not authorized {}'.format(roles_from_accounts['RoleName'],
+                                                                                      account['Principal']['AWS'][13:25]
+                                                                                      ))
                                 if os.environ.get('Action').lower() == 'delete':
                                     if del_role(roles_from_accounts['RoleName'], is_org, session) is True:
                                         list_of_deleted_roles.append(roles_from_accounts)
@@ -181,10 +198,12 @@ def lambda_handler(event, context):
                                     list_of_roles_from_accounts.append(roles_from_accounts)
 
         except:
+            print('Erro encontrado!!!')
             error = '{},{},Error: Without permission to assume the role at AWS Account'.format(account_id,
                                                                                                account_name)
             report_error.append(str(error))
 
+    print('Building report...')
     raw = ['Action,Internal Account Id,Internal Account Name,Role Name,Role Created at,Effect of Role,External Account Id']
 
     for a in list_of_roles_from_accounts:
@@ -201,7 +220,6 @@ def lambda_handler(event, context):
             role_effect = b['Effect']
             role_external_account_id = b['Principal']['AWS'][13:25]
             if check_authorized(role_external_account_id) is False:
-                #print('Account {} not authorized'.format(role_external_account_id))
                 raw.append('Manual Check, {},{},{},{},{},{}'.format(role_source_account_id,
                                                       internal_account_name,
                                                       role_name,
@@ -233,7 +251,9 @@ def lambda_handler(event, context):
     for x in report_error:
         raw.append(x)
 
+    print('Sending message...')
     send_msg('\n'.join(raw))
+
 
     return {
         'statusCode': 200,
