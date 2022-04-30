@@ -123,21 +123,40 @@ def remove_policies(rolename, org_account, session):
     )
 
     for a in response['AttachedPolicies']:
-        print('Removing, {} from {}'.format(a['PolicyName'], rolename))
         response = client.detach_role_policy(
             RoleName=rolename,
             PolicyArn=a['PolicyArn']
         )
 
 
+def del_role(rolename, org_account, session):
 
+    remove_policies(rolename, org_account, session)
 
+    if org_account is False:
+        client = boto3.client('iam',
+                            aws_access_key_id=session['Credentials']['AccessKeyId'],
+                            aws_secret_access_key=session['Credentials']['SecretAccessKey'],
+                            aws_session_token=session['Credentials']['SessionToken'])
+    else:
+        client = boto3.client('iam')
 
+    response = client.delete_role(
+        RoleName=rolename,
+    )
+
+    if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+        return True
+
+    else:
+        return False
 
 def lambda_handler(event, context):
 
     list_of_roles_from_accounts = list()
+    list_of_deleted_roles = list()
     report_error = list()
+
     org_details = get_orgs(0)
     orgs_from_accounts = get_orgs(1)
 
@@ -154,28 +173,57 @@ def lambda_handler(event, context):
                 for account in roles_from_accounts['AssumeRolePolicyDocument']['Statement']:
                     if org_details['Organization']['MasterAccountId'] != account['Principal']['AWS'][13:25]:
                         if account_id not in account['Principal']['AWS'][13:25]:
-                            list_of_roles_from_accounts.append(roles_from_accounts)
+                            if check_authorized(account['Principal']['AWS'][13:25]) is False:
+                                if os.environ.get('Action').lower() == 'delete':
+                                    if del_role(roles_from_accounts['RoleName'], is_org, session) is True:
+                                        list_of_deleted_roles.append(roles_from_accounts)
+                                else:
+                                    list_of_roles_from_accounts.append(roles_from_accounts)
 
         except:
             error = '{},{},Error: Without permission to assume the role at AWS Account'.format(account_id,
                                                                                                account_name)
             report_error.append(str(error))
 
-    raw = ['Internal Account Id,Internal Account Name,Role Name,Role Created at,Effect of Role,External Account Id']
+    raw = ['Action,Internal Account Id,Internal Account Name,Role Name,Role Created at,Effect of Role,External Account Id']
 
     for a in list_of_roles_from_accounts:
         internal_account_name = ''
         for account_name, account_id in orgs_from_accounts.items():
             if str(account_id) == str(a['Arn'][13:25]):
                 internal_account_name = account_name
+
         role_name = a['RoleName']
         role_source_account_id = a['Arn'][13:25]
         role_date = a['CreateDate']
+
         for b in a['AssumeRolePolicyDocument']['Statement']:
             role_effect = b['Effect']
             role_external_account_id = b['Principal']['AWS'][13:25]
             if check_authorized(role_external_account_id) is False:
-                raw.append('{},{},{},{},{},{}'.format(role_source_account_id,
+                #print('Account {} not authorized'.format(role_external_account_id))
+                raw.append('Manual Check, {},{},{},{},{},{}'.format(role_source_account_id,
+                                                      internal_account_name,
+                                                      role_name,
+                                                      role_date,
+                                                      role_effect,
+                                                      role_external_account_id))
+
+    for b in list_of_deleted_roles:
+        internal_account_name = ''
+        for account_name, account_id in orgs_from_accounts.items():
+            if str(account_id) == str(b['Arn'][13:25]):
+                internal_account_name = account_name
+
+        role_source_account_id = b['Arn'][13:25]
+        role_name = b['RoleName']
+        role_date = b['CreateDate']
+
+        for x in b['AssumeRolePolicyDocument']['Statement']:
+            role_effect = x['Effect']
+            role_external_account_id = x['Principal']['AWS'][13:25]
+
+        raw.append('Auto Deleted, {},{},{},{},{},{}'.format(role_source_account_id,
                                                       internal_account_name,
                                                       role_name,
                                                       role_date,
@@ -185,8 +233,7 @@ def lambda_handler(event, context):
     for x in report_error:
         raw.append(x)
 
-    print('\n'.join(raw))
-    #send_msg('\n'.join(raw))
+    send_msg('\n'.join(raw))
 
     return {
         'statusCode': 200,
