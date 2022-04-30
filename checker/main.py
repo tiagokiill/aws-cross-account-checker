@@ -18,9 +18,9 @@ def get_roles(session, org_account):
     """
     if org_account is False:
         client = boto3.client('iam',
-                            aws_access_key_id=session['Credentials']['AccessKeyId'],
-                            aws_secret_access_key=session['Credentials']['SecretAccessKey'],
-                            aws_session_token=session['Credentials']['SessionToken'])
+                              aws_access_key_id=session['Credentials']['AccessKeyId'],
+                              aws_secret_access_key=session['Credentials']['SecretAccessKey'],
+                              aws_session_token=session['Credentials']['SessionToken'])
     else:
         client = boto3.client('iam')
 
@@ -119,9 +119,9 @@ def remove_policies(rolename, org_account, session):
     """
     if org_account is False:
         client = boto3.client('iam',
-                            aws_access_key_id=session['Credentials']['AccessKeyId'],
-                            aws_secret_access_key=session['Credentials']['SecretAccessKey'],
-                            aws_session_token=session['Credentials']['SessionToken'])
+                              aws_access_key_id=session['Credentials']['AccessKeyId'],
+                              aws_secret_access_key=session['Credentials']['SecretAccessKey'],
+                              aws_session_token=session['Credentials']['SessionToken'])
     else:
         client = boto3.client('iam')
 
@@ -134,6 +134,8 @@ def remove_policies(rolename, org_account, session):
             RoleName=rolename,
             PolicyArn=a['PolicyArn']
         )
+
+        return response
 
 
 def del_role(rolename, org_account, session):
@@ -149,9 +151,9 @@ def del_role(rolename, org_account, session):
 
         if org_account is False:
             client = boto3.client('iam',
-                            aws_access_key_id=session['Credentials']['AccessKeyId'],
-                            aws_secret_access_key=session['Credentials']['SecretAccessKey'],
-                            aws_session_token=session['Credentials']['SessionToken'])
+                                  aws_access_key_id=session['Credentials']['AccessKeyId'],
+                                  aws_secret_access_key=session['Credentials']['SecretAccessKey'],
+                                  aws_session_token=session['Credentials']['SessionToken'])
         else:
             client = boto3.client('iam')
 
@@ -164,6 +166,7 @@ def del_role(rolename, org_account, session):
     except:
         return False
 
+
 def lambda_handler(event, context):
     print('Params...')
     print('Using role name {} to STS'.format(os.environ.get('OrganizationAccountAccessRole')))
@@ -173,7 +176,7 @@ def lambda_handler(event, context):
         print('Auto Delete "on"')
     else:
         print('Auto Delete "off"')
-    print('---------------------------------------------------------')
+    print('-------------------------------------------------------------------\n')
     print('Starting JOB...')
 
     list_of_roles_from_accounts = list()
@@ -217,7 +220,14 @@ def lambda_handler(event, context):
             report_error.append(str(error))
 
     print('Building report...')
-    raw = ['Action,Internal Account Id,Internal Account Name,Role Name,Role Created at,Effect of Role,External Account Id']
+    header = '| {:<14} | {:<21} | {:<17} | {:<52} | {:<17} | {:<21} | {:<25} |'.format('Action',
+                                                                                       'Internal Account Id',
+                                                                                       'Account Name',
+                                                                                       'Role Name',
+                                                                                       'Effect of Role',
+                                                                                       'External Account Id',
+                                                                                       'Role Created at')
+    raw = [header]
 
     for a in list_of_roles_from_accounts:
         internal_account_name = ''
@@ -233,12 +243,13 @@ def lambda_handler(event, context):
             role_effect = b['Effect']
             role_external_account_id = b['Principal']['AWS'][13:25]
             if check_authorized(role_external_account_id) is False:
-                raw.append('Manual Check, {},{},{},{},{},{}'.format(role_source_account_id,
-                                                      internal_account_name,
-                                                      role_name,
-                                                      role_date,
-                                                      role_effect,
-                                                      role_external_account_id))
+                raw.append('| {:<14} | {:<21} | {:<17} | {:<52} | {:<17} | {:<21} | {} |'.format('Manual Check',
+                                                                                                 role_source_account_id,
+                                                                                                 internal_account_name,
+                                                                                                 role_name,
+                                                                                                 role_effect,
+                                                                                                 role_external_account_id,
+                                                                                                 role_date))
 
     for b in list_of_deleted_roles:
         internal_account_name = ''
@@ -249,23 +260,25 @@ def lambda_handler(event, context):
         role_source_account_id = b['Arn'][13:25]
         role_name = b['RoleName']
         role_date = b['CreateDate']
-
+        role_effect = ''
+        role_external_account_id = ''
         for x in b['AssumeRolePolicyDocument']['Statement']:
             role_effect = x['Effect']
             role_external_account_id = x['Principal']['AWS'][13:25]
 
-        raw.append('Auto Deleted, {},{},{},{},{},{}'.format(role_source_account_id,
-                                                      internal_account_name,
-                                                      role_name,
-                                                      role_date,
-                                                      role_effect,
-                                                      role_external_account_id))
-
+        raw.append('| {:<14} | {:<21} | {:<17} | {:<52} | {:<17} | {:<21} | {} |'.format('Auto Deleted',
+                                                                                         role_source_account_id,
+                                                                                         internal_account_name,
+                                                                                         role_name,
+                                                                                         role_effect,
+                                                                                         role_external_account_id,
+                                                                                         role_date))
     for x in report_error:
         raw.append(x)
 
     print('Sending message...')
     send_msg('\n'.join(raw))
+    print('\n'.join(raw))
 
     return {
         'statusCode': 200,
