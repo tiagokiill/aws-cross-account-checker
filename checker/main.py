@@ -110,6 +110,13 @@ def check_authorized(account_id):
 
 
 def remove_policies(rolename, org_account, session):
+    """
+        Explanation: Method defined to detach policies on role
+        :params: str session
+        :params: bol or_account
+        :params: session to STS
+        :return: without return
+    """
     if org_account is False:
         client = boto3.client('iam',
                             aws_access_key_id=session['Credentials']['AccessKeyId'],
@@ -130,25 +137,31 @@ def remove_policies(rolename, org_account, session):
 
 
 def del_role(rolename, org_account, session):
+    """
+        Explanation: Method defined to delete role
+        :params: str session
+        :params: bol org_account
+        :params: session to STS
+        :return: bol True or False
+    """
+    try:
+        remove_policies(rolename, org_account, session)
 
-    remove_policies(rolename, org_account, session)
-
-    if org_account is False:
-        client = boto3.client('iam',
+        if org_account is False:
+            client = boto3.client('iam',
                             aws_access_key_id=session['Credentials']['AccessKeyId'],
                             aws_secret_access_key=session['Credentials']['SecretAccessKey'],
                             aws_session_token=session['Credentials']['SessionToken'])
-    else:
-        client = boto3.client('iam')
+        else:
+            client = boto3.client('iam')
 
-    response = client.delete_role(
-        RoleName=rolename,
-    )
+        response = client.delete_role(
+            RoleName=rolename,
+        )
 
-    if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-        return True
-
-    else:
+        if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+            return True
+    except:
         return False
 
 def lambda_handler(event, context):
