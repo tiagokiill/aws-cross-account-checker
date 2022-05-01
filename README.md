@@ -12,11 +12,12 @@ This project was created as a way to help cloud security professionals identify 
 ### Environment Variables
 To right execution of this code you must configure the variables below:
 
-| Name                          | Value                                                        | Description                                   |
-|-------------------------------|--------------------------------------------------------------|-----------------------------------------------|
+| Name                          | Value                                                        | Description                                        |
+|-------------------------------|--------------------------------------------------------------|----------------------------------------------------|
 | OrganizationAccountAccessRole | OrganizationAccountAccessRole                                | Name of role used to assume role in others account |
-| TopicArn                      | arn:aws:sns:us-east-1:111111111111:aws-cross-account-checker | Arn of topic used to send e-mails notification |
-| AuthorizedAccounts                      | 111111111111,11111111112,11111111113,111111111114            | Accounts separated by comma                   |
+| TopicArn                      | arn:aws:sns:us-east-1:111111111111:aws-cross-account-checker | Arn of topic used to send e-mails notification     |
+| AuthorizedAccounts            | 111111111111,11111111112,11111111113,111111111114            | Accounts separated by comma                        |
+| AutoDelete                    | on                                                           | Just use the word on to enable the auto delete     |
 
 
 ### Backlog
@@ -25,10 +26,12 @@ To right execution of this code you must configure the variables below:
 
 - [x] Environment list of allowed account's id
 
-- [] Automatic removal of roles with external accounts
+- [x] Automatic removal of roles with external accounts
 
 - [] The Open Source license
 
 - [] The new diagram
 
 - [] Text of this project proposal
+
+- [] Validate configs to execute
