@@ -31,4 +31,4 @@ jobs:
           python-version: "3.10.4"
       # Runs AWS Cross-Account Checker
       - name: Run checker
-        run: python cheker/main.py
+        run: python checker/main.py
