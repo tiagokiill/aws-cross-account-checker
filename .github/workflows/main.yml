@@ -37,4 +37,4 @@ jobs:
         run: pip install python-lambda-local
       # Runs AWS Cross-Account Checker
       - name: Run checker
-        run: python-lambda-local -f lambda_handler checker/main.py
+        run: python-lambda-local -f lambda_handler checker/main.py .github/event.json
