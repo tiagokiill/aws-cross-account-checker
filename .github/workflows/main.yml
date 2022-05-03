@@ -35,13 +35,13 @@ jobs:
       # setup python-lambda-local
       - name: install python-lambda-local
         run: pip install python-lambda-local
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
-        role-to-assume: ${{ secrets.ACCESS_ROLE }}
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.ACCESS_ROLE }}
       # Runs AWS Cross-Account Checker
       - name: Run checker
         run: python-lambda-local -f lambda_handler checker/main.py .github/event.json
