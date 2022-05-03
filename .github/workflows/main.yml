@@ -41,7 +41,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-          role-to-assume: ${{ secrets.ACCESS_ROLE }}
+          role-to-assume: ${{ secrets.ACCESS_ROLE_TO_ASSUME }}
       # Runs AWS Cross-Account Checker
       - name: Run checker
         run: python-lambda-local -f lambda_handler checker/main.py .github/event.json
