@@ -34,4 +34,4 @@ jobs:
         run: pip install boto3
       # Runs AWS Cross-Account Checker
       - name: Run checker
-        run: python checker/main.py
+        run: python checker/main.py lambda_handler
