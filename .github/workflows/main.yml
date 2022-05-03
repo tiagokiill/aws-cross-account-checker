@@ -32,6 +32,9 @@ jobs:
       # setup boto3
       - name: install boto3
         run: pip install boto3
+      # setup python-lambda-local
+      - name: install python-lambda-local
+        run: pip install python-lambda-local
       # Runs AWS Cross-Account Checker
       - name: Run checker
-        run: python checker/main.py lambda_handler
+        run: python-lambda-local -f lambda_handler checker/main.py
