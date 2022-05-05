@@ -24,18 +24,3 @@ To ensure the right execution of this code you must configure the environment va
 | TopicArn                      | arn:aws:sns:us-east-1:111111111111:aws-cross-account-checker | Arn of topic used to send e-mail notifications |
 | AuthorizedAccounts            | 111111111111,11111111112,11111111113,111111111114            | Authorized Accounts external to the org (separated by comma)                   |
 | AutoDelete                    | "on" to enable AutoDelete, any other input will disable it   | If enabled, it will automatically delete potentially non-authorized roles cross-account |
-
-
-### Backlog
-
-- [] Send the report as csv attached: Here it's necessary to change the service sns
-
-- [x] Environment list of allowed account's id
-
-- [X] Automatic removal of roles with external accounts
-
-- [X] The Open Source license
-
-- [] The new diagram
-
-- [] Text of this project proposal
