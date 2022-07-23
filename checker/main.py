@@ -7,6 +7,7 @@
 import boto3
 import json
 import os
+from remotesession import Session
 
 
 def get_roles(session, org_account):
@@ -77,12 +78,12 @@ def send_msg(accounts_from_roles):
         print('msg sent at {}'.format(response['ResponseMetadata']['HTTPHeaders']['date']))
 
 
-def get_session(account_name, account_id):
-    """
-        Explanation: Method defined to get credentials to access other accounts
-        :params: str Account_name
-        :return: dict with new session data
-    """
+"""def get_session(account_name, account_id):
+    
+        "Explanation: Method defined to get credentials to access other accounts"
+        ":params: str Account_name"
+        ":return: dict with new session data"
+    
     env_role_name = os.environ.get('OrganizationAccountAccessRole')
     rolearn = '{}{}{}{}'.format('arn:aws:iam::', account_id, ':role/', env_role_name)
     client = boto3.client('sts')
@@ -93,6 +94,7 @@ def get_session(account_name, account_id):
 
     return response
 
+"""
 
 def check_authorized(account_id):
     """
@@ -190,15 +192,17 @@ def lambda_handler(event, context):
 
     for account_name, account_id in orgs_from_accounts.items():
         try:
-            session = str
+            #session = str
             is_org = False
             if str(org_details['Organization']['MasterAccountId']) == str(account_id):
                 is_org = True
             else:
                 print('Getting Session to check Account {}'.format(account_name))
-                session = get_session(account_name, account_id)
+                session = Session(account_name, account_id)
+                session_token = session.get_remote_session_token()
+                print(session_token)
 
-            for roles_from_accounts in get_roles(session, is_org):
+            for roles_from_accounts in get_roles(session_token, is_org):
                 print('Analyzing role {} at account {} '.format(roles_from_accounts['RoleName'], account_name))
                 for account in roles_from_accounts['AssumeRolePolicyDocument']['Statement']:
                     if org_details['Organization']['MasterAccountId'] != account['Principal']['AWS'][13:25]:
@@ -208,7 +212,7 @@ def lambda_handler(event, context):
                                                                                       account['Principal']['AWS'][13:25]
                                                                                       ))
                                 if os.environ.get('AutoDelete').lower() == 'on':
-                                    if del_role(roles_from_accounts['RoleName'], is_org, session) is True:
+                                    if del_role(roles_from_accounts['RoleName'], is_org, session_token) is True:
                                         list_of_deleted_roles.append(roles_from_accounts)
                                 else:
                                     list_of_roles_from_accounts.append(roles_from_accounts)
@@ -277,10 +281,12 @@ def lambda_handler(event, context):
         raw.append(x)
 
     print('Sending message...')
-    send_msg('\n'.join(raw))
+    #send_msg('\n'.join(raw))
     print('\n'.join(raw))
 
     return {
         'statusCode': 200,
         'body': json.dumps('Job executed with success')
     }
+
+lambda_handler('1','2')
