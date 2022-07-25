@@ -36,8 +36,5 @@ class Session:
 
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == 'AccessDenied':
-                return 'The role {} is not authorized to assume role at account {}'.format(self.remote_sts_role_name, self.remote_account_name)
-
-
-
-
+                return 'The role {} is not authorized to assume role at account {}'.format(self.remote_sts_role_name,
+                                                                                           self.remote_account_name)
