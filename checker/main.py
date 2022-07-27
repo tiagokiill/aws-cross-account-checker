@@ -9,6 +9,7 @@ import json
 import os
 from remotesession import Session
 from awsorg import AwsOrg
+from iamroles import AwsIamRemote
 
 
 def get_roles(session, org_account):
@@ -177,26 +178,44 @@ def lambda_handler(event, context):
         try:
             is_org = False
             if str(awsorg.get_org_master_account_id()) == str(account_id):
+                print('org')
                 is_org = True
             else:
                 print('Getting Session to check Account {}'.format(account_name))
                 session = Session(account_name, account_id)
                 session_token = session.get_remote_session_token()
+                remote_role_name = AwsIamRemote(session_token)
+                print('opa')
 
-            for roles_from_accounts in get_roles(session_token, is_org):
-                print('Analyzing role {} at account {} '.format(roles_from_accounts['RoleName'], account_name))
-                for account in roles_from_accounts['AssumeRolePolicyDocument']['Statement']:
-                    if awsorg.get_org_master_account_id() != account['Principal']['AWS'][13:25]:
-                        if account_id not in account['Principal']['AWS'][13:25]:
-                            if check_authorized(account['Principal']['AWS'][13:25]) is False:
-                                print('Role {} with account not authorized {}'.format(roles_from_accounts['RoleName'],
-                                                                                      account['Principal']['AWS'][13:25]
-                                                                                      ))
-                                if os.environ.get('AutoDelete').lower() == 'on':
-                                    if del_role(roles_from_accounts['RoleName'], is_org, session_token) is True:
-                                        list_of_deleted_roles.append(roles_from_accounts)
-                                else:
-                                    list_of_roles_from_accounts.append(roles_from_accounts)
+            for r_role_name, \
+                r_account_id in remote_role_name.get_list_of_role_names_and_ids_from_remote_account().items():
+                print('Analyzing role {} at account {} '.format(r_role_name, account_name))
+                if awsorg.get_org_master_account_id() != r_account_id:
+                    if account_id not in r_account_id:
+                        if check_authorized(r_account_id) is False:
+                            print('Role {} with account not authorized {}'.format(r_role_name,
+                                                                                  account_id
+                                                                                  ))
+                            if os.environ.get('AutoDelete').lower() == 'on':
+                                if del_role(r_role_name, is_org, session_token) is True:
+                                    list_of_deleted_roles.append(r_role_name)
+                            else:
+                                list_of_roles_from_accounts.append(r_role_name)
+
+            # for roles_from_accounts in get_roles(session_token, is_org): Pega uma lista de rules
+            #     print('Analyzing role {} at account {} '.format(roles_from_accounts['RoleName'], account_name))
+            #     for account in roles_from_accounts['AssumeRolePolicyDocument']['Statement']:
+            #         if awsorg.get_org_master_account_id() != account['Principal']['AWS'][13:25]:
+            #             if account_id not in account['Principal']['AWS'][13:25]:
+            #                 if check_authorized(account['Principal']['AWS'][13:25]) is False:
+            #                     print('Role {} with account not authorized {}'.format(roles_from_accounts['RoleName'],
+            #                                                                           account['Principal']['AWS'][13:25]
+            #                                                                           ))
+            #                     if os.environ.get('AutoDelete').lower() == 'on':
+            #                         if del_role(roles_from_accounts['RoleName'], is_org, session_token) is True:
+            #                             list_of_deleted_roles.append(roles_from_accounts)
+            #                     else:
+            #                         list_of_roles_from_accounts.append(roles_from_accounts)
 
         except:
             print('Error Found: at Account {}'.format(account_name))

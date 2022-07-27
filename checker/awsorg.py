@@ -70,16 +70,3 @@ class AwsOrg:
             :return: String with AWS MASTER ACCOUNT EMAIL of Organization
         """
         return self.response_description['Organization']['MasterAccountEmail']
-
-
-#lista = AwsOrg()
-#print(lista.get_org_account_list_name_and_id().items())
-
-
-
-
-#{'Organization': {'Id': 'o-8ht5o37fth', 'Arn': 'arn:aws:organizations::325868435144:organization/o-8ht5o37fth',
-# 'FeatureSet': 'ALL', 'MasterAccountArn': 'arn:aws:organizations::325868435144:account/o-8ht5o37fth/325868435144',
-# 'MasterAccountId': '325868435144', 'MasterAccountEmail': 'tdk9831@nyu.edu', 'AvailablePolicyTypes':
-# [{'Type': 'SERVICE_CONTROL_POLICY', 'Status': 'ENABLED'}]}, 'ResponseMetadata': {'RequestId': '821166d4-13ac-4161-ba37-4919179092f9', 'HTTPStatusCode': 200, 'HTTPHeaders': {'x-amzn-requestid': '821166d4-13ac-4161-ba37-4919179092f9', 'content-type': 'application/x-amz-json-1.1', 'content-length': '368', 'date': 'Sun, 24 Jul 2022 14:28:00 GMT'}, 'RetryAttempts': 0}}
-
