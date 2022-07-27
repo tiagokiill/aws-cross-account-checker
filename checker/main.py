@@ -12,55 +12,6 @@ from awsorg import AwsOrg
 from iamroles import AwsIamRemote
 
 
-def get_roles(session, org_account):
-    """
-        Explanation: Method defined to get all rules from AWS
-        :params: str session
-        :params: bol or_account
-        :return: dict of os AWS accounts from rules found
-    """
-    if org_account is False:
-        client = boto3.client('iam',
-                              aws_access_key_id=session['Credentials']['AccessKeyId'],
-                              aws_secret_access_key=session['Credentials']['SecretAccessKey'],
-                              aws_session_token=session['Credentials']['SessionToken'])
-    else:
-        client = boto3.client('iam')
-
-    response = client.list_roles()
-    list_of_roles = []
-
-    for a in response['Roles']:
-
-        for b in a['AssumeRolePolicyDocument']['Statement']:
-            external_arn = b['Principal'].get('AWS', 'Access From AWS Native Service')
-            if external_arn != 'Access From AWS Native Service':
-                list_of_roles.append(a)
-
-    return list_of_roles
-
-
-# def get_orgs(x=0):
-#     """
-#         Explanation: Method defined to get all accounts from AWS Organization
-#         :params: Params required 0 to get orgs details
-#         :return: Dict of AWS accounts from organization
-#     """
-#
-#     client = boto3.client('organizations')
-#
-#     if x == 0:
-#         response_desc = client.describe_organization()
-#         return response_desc
-#     else:
-#         response = client.list_accounts()
-#         dic_item = dict()
-#         for a in response['Accounts']:
-#             dic_item[a['Name']] = a['Id']
-#
-#         return dic_item
-
-
 def send_msg(accounts_from_roles):
     """
         Explanation: Method defined to send msg with report
@@ -202,21 +153,6 @@ def lambda_handler(event, context):
                             else:
                                 list_of_roles_from_accounts.append(r_role_name)
 
-            # for roles_from_accounts in get_roles(session_token, is_org): Pega uma lista de rules
-            #     print('Analyzing role {} at account {} '.format(roles_from_accounts['RoleName'], account_name))
-            #     for account in roles_from_accounts['AssumeRolePolicyDocument']['Statement']:
-            #         if awsorg.get_org_master_account_id() != account['Principal']['AWS'][13:25]:
-            #             if account_id not in account['Principal']['AWS'][13:25]:
-            #                 if check_authorized(account['Principal']['AWS'][13:25]) is False:
-            #                     print('Role {} with account not authorized {}'.format(roles_from_accounts['RoleName'],
-            #                                                                           account['Principal']['AWS'][13:25]
-            #                                                                           ))
-            #                     if os.environ.get('AutoDelete').lower() == 'on':
-            #                         if del_role(roles_from_accounts['RoleName'], is_org, session_token) is True:
-            #                             list_of_deleted_roles.append(roles_from_accounts)
-            #                     else:
-            #                         list_of_roles_from_accounts.append(roles_from_accounts)
-
         except:
             print('Error Found: at Account {}'.format(account_name))
             error = '{},{},Error: Without permission to assume the role at AWS Account'.format(account_id,
@@ -289,4 +225,3 @@ def lambda_handler(event, context):
         'body': json.dumps('Job executed with success')
     }
 
-lambda_handler('1','2')
