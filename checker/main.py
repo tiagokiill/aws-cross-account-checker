@@ -217,7 +217,7 @@ def lambda_handler(event, context):
         raw.append(x)
 
     print('Sending message...')
-    #send_msg('\n'.join(raw))
+    send_msg('\n'.join(raw))
     print('\n'.join(raw))
 
     return {
