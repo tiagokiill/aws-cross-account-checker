@@ -224,4 +224,3 @@ def lambda_handler(event, context):
         'statusCode': 200,
         'body': json.dumps('Job executed with success')
     }
-
