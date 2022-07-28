@@ -1,6 +1,6 @@
 """
-    __autor__ = "Tiago kiill and Teogenes Panella"
-    __email__ = "tiagokiill@gmail.com and teo.panella@gmail.com"
+    __authors__ = "Tiago kiill and Teogenes Panella"
+    __emails__ = "tiago@kiill.net and teo.panella@gmail.com"
     __credits__ = "Tiago Kiill and Teogenes Panella"
 """
 
@@ -14,7 +14,7 @@ from iamroles import AwsIamRemote
 
 def send_msg(accounts_from_roles):
     """
-        Explanation: Method defined to send msg with report
+        Explanation: Method defined to send the msg with the report
         :params: list
         :return: Date of the message sent
     """
@@ -48,7 +48,7 @@ def check_authorized(account_id):
 
 def remove_policies(rolename, org_account, session):
     """
-        Explanation: Method defined to detach policies on role
+        Explanation: Method defined to detach policies from roles
         :params: str session
         :params: bol or_account
         :params: session to STS
@@ -77,7 +77,7 @@ def remove_policies(rolename, org_account, session):
 
 def del_role(rolename, org_account, session):
     """
-        Explanation: Method defined to delete role
+        Explanation: Method defined to delete potentially non-authorized role
         :params: str session
         :params: bol org_account
         :params: session to STS
