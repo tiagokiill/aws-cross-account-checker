@@ -7,55 +7,9 @@
 import boto3
 import json
 import os
-
-
-def get_roles(session, org_account):
-    """
-        Explanation: Method defined to get all rules from AWS
-        :params: str session
-        :params: bol or_account
-        :return: dict of os AWS accounts from rules found
-    """
-    if org_account is False:
-        client = boto3.client('iam',
-                              aws_access_key_id=session['Credentials']['AccessKeyId'],
-                              aws_secret_access_key=session['Credentials']['SecretAccessKey'],
-                              aws_session_token=session['Credentials']['SessionToken'])
-    else:
-        client = boto3.client('iam')
-
-    response = client.list_roles()
-    list_of_roles = []
-
-    for a in response['Roles']:
-
-        for b in a['AssumeRolePolicyDocument']['Statement']:
-            external_arn = b['Principal'].get('AWS', 'Access From AWS Native Service')
-            if external_arn != 'Access From AWS Native Service':
-                list_of_roles.append(a)
-
-    return list_of_roles
-
-
-def get_orgs(x=0):
-    """
-        Explanation: Method defined to get all accounts from AWS Organization
-        :params: Params required 0 to get orgs details
-        :return: Dict of AWS accounts from organization
-    """
-
-    client = boto3.client('organizations')
-
-    if x == 0:
-        response_desc = client.describe_organization()
-        return response_desc
-    else:
-        response = client.list_accounts()
-        dic_item = dict()
-        for a in response['Accounts']:
-            dic_item[a['Name']] = a['Id']
-
-        return dic_item
+from remotesession import Session
+from awsorg import AwsOrg
+from iamroles import AwsIamRemote
 
 
 def send_msg(accounts_from_roles):
@@ -75,23 +29,6 @@ def send_msg(accounts_from_roles):
 
     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
         print('msg sent at {}'.format(response['ResponseMetadata']['HTTPHeaders']['date']))
-
-
-def get_session(account_name, account_id):
-    """
-        Explanation: Method defined to get credentials to access other accounts
-        :params: str Account_name
-        :return: dict with new session data
-    """
-    env_role_name = os.environ.get('OrganizationAccountAccessRole')
-    rolearn = '{}{}{}{}'.format('arn:aws:iam::', account_id, ':role/', env_role_name)
-    client = boto3.client('sts')
-    response = client.assume_role(
-        RoleArn=rolearn,
-        RoleSessionName=account_name,
-        DurationSeconds=3600)
-
-    return response
 
 
 def check_authorized(account_id):
@@ -183,35 +120,38 @@ def lambda_handler(event, context):
     list_of_deleted_roles = list()
     report_error = list()
     print('Getting org Details')
-    org_details = get_orgs(0)
+    awsorg = AwsOrg()
 
     print('Getting accounts from organization')
-    orgs_from_accounts = get_orgs(1)
+    accounts_from_org = awsorg.get_org_account_list_name_and_id()
 
-    for account_name, account_id in orgs_from_accounts.items():
+    for account_name, account_id in accounts_from_org.items():
         try:
-            session = str
             is_org = False
-            if str(org_details['Organization']['MasterAccountId']) == str(account_id):
+            if str(awsorg.get_org_master_account_id()) == str(account_id):
+                print('org')
                 is_org = True
             else:
                 print('Getting Session to check Account {}'.format(account_name))
-                session = get_session(account_name, account_id)
+                session = Session(account_name, account_id)
+                session_token = session.get_remote_session_token()
+                remote_role_name = AwsIamRemote(session_token)
+                print('opa')
 
-            for roles_from_accounts in get_roles(session, is_org):
-                print('Analyzing role {} at account {} '.format(roles_from_accounts['RoleName'], account_name))
-                for account in roles_from_accounts['AssumeRolePolicyDocument']['Statement']:
-                    if org_details['Organization']['MasterAccountId'] != account['Principal']['AWS'][13:25]:
-                        if account_id not in account['Principal']['AWS'][13:25]:
-                            if check_authorized(account['Principal']['AWS'][13:25]) is False:
-                                print('Role {} with account not authorized {}'.format(roles_from_accounts['RoleName'],
-                                                                                      account['Principal']['AWS'][13:25]
-                                                                                      ))
-                                if os.environ.get('AutoDelete').lower() == 'on':
-                                    if del_role(roles_from_accounts['RoleName'], is_org, session) is True:
-                                        list_of_deleted_roles.append(roles_from_accounts)
-                                else:
-                                    list_of_roles_from_accounts.append(roles_from_accounts)
+            for r_role_name, \
+                r_account_id in remote_role_name.get_list_of_role_names_and_ids_from_remote_account().items():
+                print('Analyzing role {} at account {} '.format(r_role_name, account_name))
+                if awsorg.get_org_master_account_id() != r_account_id:
+                    if account_id not in r_account_id:
+                        if check_authorized(r_account_id) is False:
+                            print('Role {} with account not authorized {}'.format(r_role_name,
+                                                                                  account_id
+                                                                                  ))
+                            if os.environ.get('AutoDelete').lower() == 'on':
+                                if del_role(r_role_name, is_org, session_token) is True:
+                                    list_of_deleted_roles.append(r_role_name)
+                            else:
+                                list_of_roles_from_accounts.append(r_role_name)
 
         except:
             print('Error Found: at Account {}'.format(account_name))
@@ -231,7 +171,7 @@ def lambda_handler(event, context):
 
     for a in list_of_roles_from_accounts:
         internal_account_name = ''
-        for account_name, account_id in orgs_from_accounts.items():
+        for account_name, account_id in accounts_from_org.items():
             if str(account_id) == str(a['Arn'][13:25]):
                 internal_account_name = account_name
 
@@ -253,7 +193,7 @@ def lambda_handler(event, context):
 
     for b in list_of_deleted_roles:
         internal_account_name = ''
-        for account_name, account_id in orgs_from_accounts.items():
+        for account_name, account_id in accounts_from_org.items():
             if str(account_id) == str(b['Arn'][13:25]):
                 internal_account_name = account_name
 
