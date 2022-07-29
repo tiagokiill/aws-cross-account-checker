@@ -9,6 +9,7 @@ import json
 import os
 from remotesession import Session
 from awsorg import AwsOrg
+from awsorg import AuthourizedAccount
 from iamroles import AwsIamRemote
 
 
@@ -29,21 +30,6 @@ def send_msg(accounts_from_roles):
 
     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
         print('msg sent at {}'.format(response['ResponseMetadata']['HTTPHeaders']['date']))
-
-
-def check_authorized(account_id):
-    """
-        Explanation: Method defined to validate if the account was authorized
-        :params: str account_id
-        :return: bol True if account was authorized.
-    """
-
-    authorized_account = False
-    for a in (os.environ.get('AuthorizedAccounts')).split(','):
-        if account_id == a:
-            authorized_account = True
-
-    return authorized_account
 
 
 def remove_policies(rolename, org_account, session):
@@ -121,6 +107,7 @@ def lambda_handler(event, context):
     report_error = list()
     print('Getting org Details')
     awsorg = AwsOrg()
+    authorized_account = AuthourizedAccount()
 
     print('Getting accounts from organization')
     accounts_from_org = awsorg.get_org_account_list_name_and_id()
@@ -129,21 +116,19 @@ def lambda_handler(event, context):
         try:
             is_org = False
             if str(awsorg.get_org_master_account_id()) == str(account_id):
-                print('org')
                 is_org = True
             else:
                 print('Getting Session to check Account {}'.format(account_name))
                 session = Session(account_name, account_id)
                 session_token = session.get_remote_session_token()
                 remote_role_name = AwsIamRemote(session_token)
-                print('opa')
 
             for r_role_name, \
                 r_account_id in remote_role_name.get_list_of_role_names_and_ids_from_remote_account().items():
                 print('Analyzing role {} at account {} '.format(r_role_name, account_name))
                 if awsorg.get_org_master_account_id() != r_account_id:
                     if account_id not in r_account_id:
-                        if check_authorized(r_account_id) is False:
+                        if authorized_account.check_authorized(r_account_id) is False:
                             print('Role {} with account not authorized {}'.format(r_role_name,
                                                                                   account_id
                                                                                   ))
@@ -182,7 +167,7 @@ def lambda_handler(event, context):
         for b in a['AssumeRolePolicyDocument']['Statement']:
             role_effect = b['Effect']
             role_external_account_id = b['Principal']['AWS'][13:25]
-            if check_authorized(role_external_account_id) is False:
+            if authorized_account.check_authorized(r_account_id) is False:
                 raw.append('| {:<14} | {:<21} | {:<17} | {:<52} | {:<17} | {:<21} | {} |'.format('Manual Check',
                                                                                                  role_source_account_id,
                                                                                                  internal_account_name,

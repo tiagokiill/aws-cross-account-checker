@@ -5,6 +5,7 @@
 """
 
 import boto3
+import os
 
 
 class AwsOrg:
@@ -70,3 +71,21 @@ class AwsOrg:
             :return: String with AWS MASTER ACCOUNT EMAIL of Organization
         """
         return self.response_description['Organization']['MasterAccountEmail']
+
+class AuthourizedAccount:
+    def __init__(self):
+        self.list_of_authorized_accounts = os.environ.get('AuthorizedAccounts')
+
+
+    def check_authorized(self, account_id):
+        """
+            Explanation: Method defined to validate if the account was authorized
+            :params: str account_id
+            :return: bol True if account was authorized.
+        """
+        authorized_account = False
+        for a in (self.list_of_authorized_accounts).split(','):
+            if account_id == a:
+                authorized_account = True
+
+        return authorized_account
