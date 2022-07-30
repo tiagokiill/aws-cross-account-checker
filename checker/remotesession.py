@@ -10,12 +10,10 @@ import os
 
 
 class Session:
-
     def __init__(self, remote_account_name, remote_account_id):
         self.remote_account_name = remote_account_name
         self.remote_account_id = remote_account_id
         self.remote_sts_role_name = os.environ.get('OrganizationAccountAccessRole')
-
 
     def get_remote_session_token(self):
         """
@@ -23,16 +21,16 @@ class Session:
             :params: str Account_name
             :return: dict with new session data
         """
-        self.rolearn = '{}{}{}{}'.format('arn:aws:iam::', self.remote_account_id, ':role/', self.remote_sts_role_name)
+        rolearn = '{}{}{}{}'.format('arn:aws:iam::', self.remote_account_id, ':role/', self.remote_sts_role_name)
         client = boto3.client('sts')
         try:
-            self.response = client.assume_role(
-                RoleArn=self.rolearn,
+            response = client.assume_role(
+                RoleArn=rolearn,
                 RoleSessionName=self.remote_account_name,
                 DurationSeconds=3600
             )
 
-            return self.response
+            return response
 
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == 'AccessDenied':
