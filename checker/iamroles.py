@@ -5,6 +5,8 @@
 """
 
 import boto3
+import botocore
+from remotesession import Session
 
 
 class AwsIamLocal:
@@ -29,6 +31,36 @@ class AwsIamLocal:
                         list_of_local_role_name[a['RoleName']] = authorized_account_id['Principal']['AWS'][13:25]
 
         return list_of_local_role_name
+
+    def remove_policies_from_local_account(self, role_name):
+        """
+            Explanation: Method defined to detach policies from roles in local account
+            :params: Name of Role
+            :return: Return True if had success
+        """
+        try:
+            lis_of_policies = self.local_client.list_attached_role_policies(RoleName=role_name)
+            if not lis_of_policies['AttachedPolicies']:
+                print('There aren´t policy attacked in this role')
+                return True
+            else:
+                for policy in lis_of_policies['AttachedPolicies']:
+                    response = self.local_client.detach_role_policy(
+                        RoleName=role_name,
+                        PolicyArn=policy['PolicyArn']
+                    )
+                    if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+                        print('The Policy "{}" was removed from role "{}" in {} '.format(policy['PolicyName'],
+                                                                                         role_name,
+                                                                                         'Organization Account'))
+                return True
+
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                print('The role is not authorized to execute this action')
+            elif e.response['Error']['Code'] == 'NoSuchEntity':
+                print('The role "{}" not found'.format(role_name))
+            return False
 
 
 class AwsIamRemote:
@@ -56,3 +88,33 @@ class AwsIamRemote:
                         list_of_remote_role_name[a['RoleName']] = authorized_account_id['Principal']['AWS'][13:25]
 
         return list_of_remote_role_name
+
+    def remove_policies_from_remote_account(self, role_name):
+        """
+            Explanation: Method defined to detach policies from roles in remote account
+            :params: Name of Role
+            :return: Return True if had success
+        """
+        try:
+            list_of_policies = self.remote_client.list_attached_role_policies(RoleName=role_name)
+            if not list_of_policies['AttachedPolicies']:
+                print('There aren´t policy attacked in this role')
+                return True
+            else:
+                for policy in list_of_policies['AttachedPolicies']:
+                    response = self.remote_client.detach_role_policy(
+                        RoleName=role_name,
+                        PolicyArn=policy['PolicyArn']
+                    )
+                    if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+                        print('The Policy "{}" was removed from role "{}" in {} '.format(policy['PolicyName'],
+                                                                                         role_name,
+                                                                                         'Organization Account'))
+                return True
+
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                print('The role is not authorized to execute this action')
+            elif e.response['Error']['Code'] == 'NoSuchEntity':
+                print('The role "{}" not found'.format(role_name))
+            return False
