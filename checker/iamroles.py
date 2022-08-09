@@ -49,9 +49,8 @@ class AwsIamLocal:
                         PolicyArn=policy['PolicyArn']
                     )
                     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-                        print('The Policy "{}" was removed from role "{}" in {}'.format(policy['PolicyName'],
-                                                                                         role_name,
-                                                                                         'Organization Account'))
+                        print('The Policy "{}" was removed from role "{}" in {}'.format(policy['PolicyName'], role_name,
+                                                                                        'Organization Account'))
                 return True
 
         except botocore.exceptions.ClientError as e:
@@ -70,8 +69,13 @@ class AwsIamLocal:
         try:
             if self.local_client.delete_role(RoleName=role_name)['ResponseMetadata']['HTTPStatusCode'] == 200:
                 return True
-        except:
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                print('The role is not authorized to execute this action')
+            elif e.response['Error']['Code'] == 'NoSuchEntity':
+                print('The role "{}" not found'.format(role_name))
             return False
+
 
 class AwsIamRemote:
     def __init__(self, token_session):
@@ -119,9 +123,8 @@ class AwsIamRemote:
                         PolicyArn=policy['PolicyArn']
                     )
                     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-                        print('The Policy "{}" was removed from role "{}" in {}'.format(policy['PolicyName'],
-                                                                                         role_name,
-                                                                                         self.remote_account_name))
+                        print('The Policy "{}" was removed from role "{}" in {}'.format(policy['PolicyName'], role_name,
+                                                                                        self.remote_account_name))
 
                 return True
 
@@ -141,5 +144,9 @@ class AwsIamRemote:
         try:
             if self.remote_client.delete_role(RoleName=role_name)['ResponseMetadata']['HTTPStatusCode'] == 200:
                 return True
-        except:
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                print('The role is not authorized to execute this action')
+            elif e.response['Error']['Code'] == 'NoSuchEntity':
+                print('The role "{}" not found'.format(role_name))
             return False

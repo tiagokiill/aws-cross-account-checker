@@ -1,3 +1,9 @@
+"""
+    __autor__ = "Tiago kiill and Teogenes Panella"
+    __email__ = "tiagokiill@gmail.com and teo.panella@gmail.com"
+    __credits__ = "Tiago Kiill and Teogenes Panella"
+"""
+
 import boto3
 import os
 
