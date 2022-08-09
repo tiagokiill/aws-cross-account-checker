@@ -33,33 +33,33 @@ def send_msg(accounts_from_roles):
         print('msg sent at {}'.format(response['ResponseMetadata']['HTTPHeaders']['date']))
 
 
-def remove_policies(rolename, org_account, session):
-    """
-        Explanation: Method defined to detach policies from roles
-        :params: str session
-        :params: bol or_account
-        :params: session to STS
-        :return: without return
-    """
-    if org_account is False:
-        client = boto3.client('iam',
-                              aws_access_key_id=session['Credentials']['AccessKeyId'],
-                              aws_secret_access_key=session['Credentials']['SecretAccessKey'],
-                              aws_session_token=session['Credentials']['SessionToken'])
-    else:
-        client = boto3.client('iam')
-
-    response = client.list_attached_role_policies(
-        RoleName=rolename
-    )
-
-    for a in response['AttachedPolicies']:
-        response = client.detach_role_policy(
-            RoleName=rolename,
-            PolicyArn=a['PolicyArn']
-        )
-
-        return response
+# def remove_policies(rolename, org_account, session):
+#     """
+#         Explanation: Method defined to detach policies from roles
+#         :params: str session
+#         :params: bol or_account
+#         :params: session to STS
+#         :return: without return
+#     """
+#     if org_account is False:
+#         client = boto3.client('iam',
+#                               aws_access_key_id=session['Credentials']['AccessKeyId'],
+#                               aws_secret_access_key=session['Credentials']['SecretAccessKey'],
+#                               aws_session_token=session['Credentials']['SessionToken'])
+#     else:
+#         client = boto3.client('iam')
+#
+#     response = client.list_attached_role_policies(
+#         RoleName=rolename
+#     )
+#
+#     for a in response['AttachedPolicies']:
+#         response = client.detach_role_policy(
+#             RoleName=rolename,
+#             PolicyArn=a['PolicyArn']
+#         )
+#
+#         return response
 
 
 def del_role(rolename, org_account, session):
@@ -112,37 +112,37 @@ def lambda_handler(event, context):
 
     for i_account_name, i_account_id in accounts_from_org.items():
         if i_account_id == awsorg.get_org_master_account_id():
-            for l_role_name, r_account_id in AwsIamLocal().get_list_of_role_names_and_ids_from_local_account().items():
+            for role_name, r_account_id in AwsIamLocal().get_list_of_role_names_and_ids_from_local_account().items():
                 if authorized_account.check_authorized(r_account_id) is False:
                     if os.environ.get('AutoDelete').lower() == 'on':
-                        if AwsIamLocal().remove_policies_from_local_account(l_role_name) is True:
+                        if AwsIamLocal().remove_policies_from_local_account(role_name) is True:
                             list_of_roles_from_accounts = 'Action "{}" The role "{}" was allowing the unauthorized ' \
                                                           'account "{}" to access account "{}"'.format('Deleted',
-                                                                                                       l_role_name,
+                                                                                                       role_name,
                                                                                                        r_account_id,
                                                                                                        i_account_name)
                     else:
                         list_of_roles_from_accounts = 'Action "{}" The role "{}" is allowing the unauthorized ' \
                                                       'account "{}" to access account "{}"'.format('Manual',
-                                                                                                   l_role_name,
+                                                                                                   role_name,
                                                                                                    r_account_id,
                                                                                                    i_account_name)
         else:
             session = Session(i_account_name, i_account_id).get_remote_session_token()
-            for r_role_name, r_account_id in \
+            for role_name, r_account_id in \
                     AwsIamRemote(session).get_list_of_role_names_and_ids_from_remote_account().items():
                 if authorized_account.check_authorized(r_account_id) is False:
                     if os.environ.get('AutoDelete').lower() == 'on':
-                        if AwsIamRemote(session).remove_policies_from_remote_account(r_role_name) is True:
+                        if AwsIamRemote(session).remove_policies_from_remote_account(role_name) is True:
                             list_of_roles_from_accounts = 'Action "{}" The role "{}" was allowing the unauthorized ' \
                                                           'account "{}" to access account "{}"'.format('Deleted',
-                                                                                                       r_role_name,
+                                                                                                       role_name,
                                                                                                        r_account_id,
                                                                                                        i_account_name)
                     else:
                         list_of_roles_from_accounts = 'Action "{}" The role "{}" is allowing the unauthorized ' \
                                                       'account "{}" to access account "{}"'.format('Manual',
-                                                                                                   r_role_name,
+                                                                                                   role_name,
                                                                                                    r_account_id,
                                                                                                    i_account_name)
 

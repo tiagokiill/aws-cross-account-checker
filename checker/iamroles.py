@@ -69,6 +69,8 @@ class AwsIamRemote:
                                           aws_secret_access_key=token_session['Credentials']['SecretAccessKey'],
                                           aws_session_token=token_session['Credentials']['SessionToken'])
 
+        self.remote_account_name = (token_session['AssumedRoleUser']['Arn'].split(':')[5]).split('/')[2]
+
     def get_list_of_role_names_and_ids_from_remote_account(self):
         """
             Explanation: Method defined to get all rule names from AWS remote account
@@ -106,9 +108,10 @@ class AwsIamRemote:
                         PolicyArn=policy['PolicyArn']
                     )
                     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-                        print('The Policy "{}" was removed from role "{}" in {} '.format(policy['PolicyName'],
+                        print('The Policy "{}" was removed from role "{}" in {}/{} '.format(policy['PolicyName'],
                                                                                          role_name,
-                                                                                         'Organization Account'))
+                                                                                         self.remote_account_name))
+
                 return True
 
         except botocore.exceptions.ClientError as e:
