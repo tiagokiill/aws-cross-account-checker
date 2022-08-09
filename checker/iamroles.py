@@ -49,7 +49,7 @@ class AwsIamLocal:
                         PolicyArn=policy['PolicyArn']
                     )
                     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-                        print('The Policy "{}" was removed from role "{}" in {} '.format(policy['PolicyName'],
+                        print('The Policy "{}" was removed from role "{}" in {}'.format(policy['PolicyName'],
                                                                                          role_name,
                                                                                          'Organization Account'))
                 return True
@@ -61,6 +61,17 @@ class AwsIamLocal:
                 print('The role "{}" not found'.format(role_name))
             return False
 
+    def delete_role_from_local_account(self, role_name):
+        """
+            Explanation: Method defined to delete potentially non-authorized role
+            :params: Role name
+            :return: bol True or False
+        """
+        try:
+            if self.local_client.delete_role(RoleName=role_name)['ResponseMetadata']['HTTPStatusCode'] == 200:
+                return True
+        except:
+            return False
 
 class AwsIamRemote:
     def __init__(self, token_session):
@@ -108,7 +119,7 @@ class AwsIamRemote:
                         PolicyArn=policy['PolicyArn']
                     )
                     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-                        print('The Policy "{}" was removed from role "{}" in {}/{} '.format(policy['PolicyName'],
+                        print('The Policy "{}" was removed from role "{}" in {}'.format(policy['PolicyName'],
                                                                                          role_name,
                                                                                          self.remote_account_name))
 
@@ -119,4 +130,16 @@ class AwsIamRemote:
                 print('The role is not authorized to execute this action')
             elif e.response['Error']['Code'] == 'NoSuchEntity':
                 print('The role "{}" not found'.format(role_name))
+            return False
+
+    def delete_role_from_remote_account(self, role_name):
+        """
+            Explanation: Method defined to delete potentially non-authorized role
+            :params: str Role name
+            :return: bol True or False
+        """
+        try:
+            if self.remote_client.delete_role(RoleName=role_name)['ResponseMetadata']['HTTPStatusCode'] == 200:
+                return True
+        except:
             return False

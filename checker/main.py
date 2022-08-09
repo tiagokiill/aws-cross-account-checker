@@ -33,64 +33,6 @@ def send_msg(accounts_from_roles):
         print('msg sent at {}'.format(response['ResponseMetadata']['HTTPHeaders']['date']))
 
 
-# def remove_policies(rolename, org_account, session):
-#     """
-#         Explanation: Method defined to detach policies from roles
-#         :params: str session
-#         :params: bol or_account
-#         :params: session to STS
-#         :return: without return
-#     """
-#     if org_account is False:
-#         client = boto3.client('iam',
-#                               aws_access_key_id=session['Credentials']['AccessKeyId'],
-#                               aws_secret_access_key=session['Credentials']['SecretAccessKey'],
-#                               aws_session_token=session['Credentials']['SessionToken'])
-#     else:
-#         client = boto3.client('iam')
-#
-#     response = client.list_attached_role_policies(
-#         RoleName=rolename
-#     )
-#
-#     for a in response['AttachedPolicies']:
-#         response = client.detach_role_policy(
-#             RoleName=rolename,
-#             PolicyArn=a['PolicyArn']
-#         )
-#
-#         return response
-
-
-def del_role(rolename, org_account, session):
-    """
-        Explanation: Method defined to delete potentially non-authorized role
-        :params: str session
-        :params: bol org_account
-        :params: session to STS
-        :return: bol True or False
-    """
-    try:
-        remove_policies(rolename, org_account, session)
-
-        if org_account is False:
-            client = boto3.client('iam',
-                                  aws_access_key_id=session['Credentials']['AccessKeyId'],
-                                  aws_secret_access_key=session['Credentials']['SecretAccessKey'],
-                                  aws_session_token=session['Credentials']['SessionToken'])
-        else:
-            client = boto3.client('iam')
-
-        response = client.delete_role(
-            RoleName=rolename,
-        )
-
-        if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-            return True
-    except:
-        return False
-
-
 def lambda_handler(event, context):
     awsorg = AwsOrg()
     authorized_account = AuthorizedAccounts()
@@ -116,17 +58,24 @@ def lambda_handler(event, context):
                 if authorized_account.check_authorized(r_account_id) is False:
                     if os.environ.get('AutoDelete').lower() == 'on':
                         if AwsIamLocal().remove_policies_from_local_account(role_name) is True:
-                            list_of_roles_from_accounts = 'Action "{}" The role "{}" was allowing the unauthorized ' \
-                                                          'account "{}" to access account "{}"'.format('Deleted',
-                                                                                                       role_name,
-                                                                                                       r_account_id,
-                                                                                                       i_account_name)
+                            if AwsIamLocal().delete_role_from_local_account(role_name) is True:
+                                list_of_roles_from_accounts.append('Action "{}" on the role "{}" that was allowing the ' \
+                                                          'unauthorized account "{}" to access your account "{}"'.format(
+                                                                                                    'Deleted',
+                                                                                                    role_name,
+                                                                                                    r_account_id,
+                                                                                                    i_account_name))
+                            else:
+                                list_of_roles_from_accounts.append('Error to execute the action "{}" on the role "{}" that ' \
+                                                          'was allowing the unauthorized account "{}" to access your ' \
+                                                          'account "{}"'.format('Deleted', role_name, r_account_id,
+                                                                                i_account_name))
                     else:
-                        list_of_roles_from_accounts = 'Action "{}" The role "{}" is allowing the unauthorized ' \
-                                                      'account "{}" to access account "{}"'.format('Manual',
+                        list_of_roles_from_accounts.append('Action "{}" on the role "{}" is allowing the unauthorized ' \
+                                                      'account "{}" to access your account "{}"'.format('Manual',
                                                                                                    role_name,
                                                                                                    r_account_id,
-                                                                                                   i_account_name)
+                                                                                                   i_account_name))
         else:
             session = Session(i_account_name, i_account_id).get_remote_session_token()
             for role_name, r_account_id in \
@@ -134,22 +83,30 @@ def lambda_handler(event, context):
                 if authorized_account.check_authorized(r_account_id) is False:
                     if os.environ.get('AutoDelete').lower() == 'on':
                         if AwsIamRemote(session).remove_policies_from_remote_account(role_name) is True:
-                            list_of_roles_from_accounts = 'Action "{}" The role "{}" was allowing the unauthorized ' \
-                                                          'account "{}" to access account "{}"'.format('Deleted',
-                                                                                                       role_name,
-                                                                                                       r_account_id,
-                                                                                                       i_account_name)
+                            if AwsIamRemote(session).delete_role_from_remote_account(role_name) is True:
+                                list_of_roles_from_accounts.append('Action "{}" on the role "{}" that was allowing the ' \
+                                                          'unauthorized account "{}" to access your account "{}"'.format(
+                                'Deleted',
+                                role_name,
+                                r_account_id,
+                                i_account_name))
+                        else:
+                            list_of_roles_from_accounts.append('Error to execute the action "{}" on the role "{}" that ' \
+                                                          'was allowing the unauthorized account "{}" to access your ' \
+                                                          'account "{}"'.format('Deleted', role_name, r_account_id,
+                                                                                i_account_name))
                     else:
-                        list_of_roles_from_accounts = 'Action "{}" The role "{}" is allowing the unauthorized ' \
+                        list_of_roles_from_accounts.append('Action "{}" The role "{}" is allowing the unauthorized ' \
                                                       'account "{}" to access account "{}"'.format('Manual',
                                                                                                    role_name,
                                                                                                    r_account_id,
-                                                                                                   i_account_name)
+                                                                                                   i_account_name))
 
     if not list_of_roles_from_accounts:
         print('There aren´t unauthorized accounts')
     else:
         print(list_of_roles_from_accounts)
+    #113190122984
     # for account_name, account_id in accounts_from_org.items():
     #     try:
     #         is_org = False
