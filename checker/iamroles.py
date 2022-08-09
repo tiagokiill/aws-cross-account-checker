@@ -6,7 +6,6 @@
 
 import boto3
 import botocore
-from remotesession import Session
 
 
 class AwsIamLocal:
@@ -16,8 +15,8 @@ class AwsIamLocal:
     def get_list_of_role_names_and_ids_from_local_account(self):
         """
             Explanation: Method defined to get all rule names from AWS remote account
-            :params: str session
-            :return: List of rules found in remote AWS account
+            :params: N/A
+            :return: List of rules found in local AWS account
         """
         local_list_of_roles = self.local_client.list_roles()
         list_of_local_role_name = dict()
@@ -35,16 +34,16 @@ class AwsIamLocal:
     def remove_policies_from_local_account(self, role_name):
         """
             Explanation: Method defined to detach policies from roles in local account
-            :params: Name of Role
+            :params: Role name
             :return: Return True if had success
         """
         try:
-            lis_of_policies = self.local_client.list_attached_role_policies(RoleName=role_name)
-            if not lis_of_policies['AttachedPolicies']:
-                print('There aren´t policy attacked in this role')
+            list_of_policies = self.local_client.list_attached_role_policies(RoleName=role_name)
+            if not list_of_policies['AttachedPolicies']:
+                print('There aren´t policy attached in this role')
                 return True
             else:
-                for policy in lis_of_policies['AttachedPolicies']:
+                for policy in list_of_policies['AttachedPolicies']:
                     response = self.local_client.detach_role_policy(
                         RoleName=role_name,
                         PolicyArn=policy['PolicyArn']
@@ -92,13 +91,13 @@ class AwsIamRemote:
     def remove_policies_from_remote_account(self, role_name):
         """
             Explanation: Method defined to detach policies from roles in remote account
-            :params: Name of Role
+            :params: Role Name
             :return: Return True if had success
         """
         try:
             list_of_policies = self.remote_client.list_attached_role_policies(RoleName=role_name)
             if not list_of_policies['AttachedPolicies']:
-                print('There aren´t policy attacked in this role')
+                print('There aren´t policy attached in this role')
                 return True
             else:
                 for policy in list_of_policies['AttachedPolicies']:

@@ -96,8 +96,8 @@ def lambda_handler(event, context):
     authorized_account = AuthorizedAccounts()
     accounts_from_org = awsorg.get_org_account_list_name_and_id()
     list_of_roles_from_accounts = list()
-    #list_of_deleted_roles = list()
-    #report_error = list()
+    # list_of_deleted_roles = list()
+    # report_error = list()
 
     print('Params...')
     print('Using role name {} to STS'.format(os.environ.get('OrganizationAccountAccessRole')))
@@ -112,33 +112,37 @@ def lambda_handler(event, context):
 
     for i_account_name, i_account_id in accounts_from_org.items():
         if i_account_id == awsorg.get_org_master_account_id():
-            for role_name, r_account_id in \
-                    AwsIamLocal().get_list_of_role_names_and_ids_from_local_account().items():
+            for l_role_name, r_account_id in AwsIamLocal().get_list_of_role_names_and_ids_from_local_account().items():
                 if authorized_account.check_authorized(r_account_id) is False:
                     if os.environ.get('AutoDelete').lower() == 'on':
-                        list_of_roles_from_accounts = 'Action "{}" The role "{}" was allowing the unauthorized ' \
-                                                      'account "{}" to access account "{}"'.format('Deleted', role_name,
-                                                                                                   r_account_id,
-                                                                                                   i_account_name)
+                        if AwsIamLocal().remove_policies_from_local_account(l_role_name) is True:
+                            list_of_roles_from_accounts = 'Action "{}" The role "{}" was allowing the unauthorized ' \
+                                                          'account "{}" to access account "{}"'.format('Deleted',
+                                                                                                       l_role_name,
+                                                                                                       r_account_id,
+                                                                                                       i_account_name)
                     else:
                         list_of_roles_from_accounts = 'Action "{}" The role "{}" is allowing the unauthorized ' \
-                                                      'account "{}" to access account "{}"'.format('Manual', role_name,
+                                                      'account "{}" to access account "{}"'.format('Manual',
+                                                                                                   l_role_name,
                                                                                                    r_account_id,
                                                                                                    i_account_name)
         else:
             session = Session(i_account_name, i_account_id).get_remote_session_token()
-            for role_name, r_account_id in \
+            for r_role_name, r_account_id in \
                     AwsIamRemote(session).get_list_of_role_names_and_ids_from_remote_account().items():
                 if authorized_account.check_authorized(r_account_id) is False:
                     if os.environ.get('AutoDelete').lower() == 'on':
-                        #del_role(role_name, False, session)
-                        list_of_roles_from_accounts = 'Action "{}" The role "{}" was allowing the unauthorized ' \
-                                                      'account "{}" to access account "{}"'.format('Deleted', role_name,
-                                                                                                   r_account_id,
-                                                                                                   i_account_name)
+                        if AwsIamRemote(session).remove_policies_from_remote_account(r_role_name) is True:
+                            list_of_roles_from_accounts = 'Action "{}" The role "{}" was allowing the unauthorized ' \
+                                                          'account "{}" to access account "{}"'.format('Deleted',
+                                                                                                       r_role_name,
+                                                                                                       r_account_id,
+                                                                                                       i_account_name)
                     else:
                         list_of_roles_from_accounts = 'Action "{}" The role "{}" is allowing the unauthorized ' \
-                                                      'account "{}" to access account "{}"'.format('Manual', role_name,
+                                                      'account "{}" to access account "{}"'.format('Manual',
+                                                                                                   r_role_name,
                                                                                                    r_account_id,
                                                                                                    i_account_name)
 
