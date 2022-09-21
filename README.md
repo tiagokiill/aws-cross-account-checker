@@ -9,7 +9,7 @@ Roles cross-accounts are roles used to delegate access to resources in different
 
 This project was created as a way to help cloud security professionals to identify and protect their environments from unauthorized roles cross-account, mitigating the risks associated with unauthorized cross-account access. It requires a role to assume roles in other accounts, a Topic on SNS, a list of the organization's accounts, and switching AutoDelete "on" or "off". This last option makes this project work as a detective control, reporting potentially unauthorized roles cross-account, or a corrective control, by automatically eliminating potentially non-authorized roles cross-account. In other words, if you turn AutoDelete on, roles cross-account from accounts outside the organization will be automatically deleteted. 
 
-<img alt="General" height="600" src="./imgs/projeto.svg" title="General Diagram" width="600"/>
+<img alt="General" height="600" src="./imgs/project.svg" title="General Diagram" width="600"/>
 
 ### Environment Variables
 To ensure the right execution of this code you must configure the environment variables below:
